@@ -319,7 +319,7 @@ export default function Home() {
                               <Button
                                 size="sm"
                                 variant="secondary"
-                                onClick={() => speak(result.urdu, 'ur-PK')}
+                                onClick={() => speak(result.urdu ?? '', 'ur-PK')}
                                 className="bg-white text-black border border-gray-300 hover:bg-gray-100"
                                 aria-label="Listen to Urdu summary"
                                 type="button"
