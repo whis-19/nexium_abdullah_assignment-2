@@ -23,14 +23,14 @@ export async function POST(req: NextRequest) {
           // Try to get main content, fallback to body text
           const main = $("main").text() || $("article").text() || $("body").text();
           return { url, text: main.trim() };
-        } catch (err) {
+        } catch (_) {
           return { url, error: "Failed to fetch or parse." };
         }
       })
     );
 
     return NextResponse.json({ results });
-  } catch (error) {
+  } catch (_) {
     return NextResponse.json({ error: "Invalid request." }, { status: 400 });
   }
 } 

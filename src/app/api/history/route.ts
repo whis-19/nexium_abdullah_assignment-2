@@ -12,7 +12,17 @@ const BlogTextSchema = new mongoose.Schema({
 
 const BlogText = mongoose.models.BlogText || mongoose.model('BlogText', BlogTextSchema);
 
-export async function GET(req: NextRequest) {
+type Summary = {
+  url: string;
+  summary: string;
+  urdu_translation: string;
+  sentiment_score: number;
+  sentiment_classification: string;
+  created_at: string;
+};
+type FullText = { url: string; text: string };
+
+export async function GET(_req: NextRequest) {
   try {
     // Get summaries from Supabase
     const { data: summaries, error: supabaseError } = await supabase
@@ -29,8 +39,8 @@ export async function GET(req: NextRequest) {
     const fullTexts = await BlogText.find().sort({ timestamp: -1 });
 
     // Combine the data
-    const history = summaries?.map((summary: any) => {
-      const fullText = fullTexts.find((text: any) => text.url === summary.url);
+    const history = (summaries as Summary[])?.map((summary) => {
+      const fullText = (fullTexts as FullText[]).find((text) => text.url === summary.url);
       return {
         url: summary.url,
         summary: summary.summary,
