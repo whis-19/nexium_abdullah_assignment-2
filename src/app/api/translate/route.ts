@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
     }
     const urdu = translateToUrdu(summary);
     return NextResponse.json({ urdu });
-  } catch (error) {
+  } catch (_) {
     return NextResponse.json({ error: "Failed to translate." }, { status: 500 });
   }
 } 

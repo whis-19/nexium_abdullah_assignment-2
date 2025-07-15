@@ -11,15 +11,33 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Toaster } from "@/components/ui/toaster";
 import { Search, Volume2 } from "lucide-react";
 
+// Define types for results and history
+type Result = {
+  url: string;
+  text: string;
+  summary: string;
+  urdu?: string;
+  sentiment: { score: number; classification: string };
+  error?: string;
+};
+type HistoryItem = {
+  url: string;
+  summary: string;
+  urdu_translation: string;
+  sentiment_score: number;
+  sentiment_classification: string;
+  created_at: string;
+  full_text: string;
+};
+
 export default function Home() {
   const [urls, setUrls] = useState("");
   const [loading, setLoading] = useState(false);
-  const [results, setResults] = useState<any[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
   const [language, setLanguage] = useState<"english" | "urdu">("english");
-  const [editingIndex, setEditingIndex] = useState<number | null>(null);
   const [editText, setEditText] = useState("");
   const [showHistory, setShowHistory] = useState(false);
-  const [history, setHistory] = useState<any[]>([]);
+  const [history, setHistory] = useState<HistoryItem[]>([]);
   const [useLLM, setUseLLM] = useState(false);
   const [translatingIndex, setTranslatingIndex] = useState<number | null>(null);
   const { toast } = useToast();
@@ -39,7 +57,7 @@ export default function Home() {
       } else {
         toast({ title: "Failed to load history", variant: "destructive" });
       }
-    } catch (error) {
+    } catch (_) {
       toast({ title: "Failed to load history", variant: "destructive" });
     }
   };
@@ -92,7 +110,7 @@ export default function Home() {
                 urdu,
                 sentiment
               };
-            } catch (error) {
+            } catch (_) {
               return { ...result, summary: "Failed to generate summary", urdu: "Translation failed", sentiment: { score: 0, classification: "neutral" } };
             }
           })
@@ -117,13 +135,13 @@ export default function Home() {
             })
           );
           toast({ title: "All results stored successfully", variant: "default" });
-        } catch (storageError) {
-          toast({ title: "Storage error", description: String(storageError), variant: "destructive" });
+        } catch (_) {
+          toast({ title: "Storage error", description: "Failed to store results", variant: "destructive" });
         }
       } else {
         toast({ title: "Error", description: data.error, variant: "destructive" });
       }
-    } catch (error) {
+    } catch (_) {
       toast({ title: "Failed to process URLs", variant: "destructive" });
     } finally {
       setLoading(false);
@@ -131,26 +149,7 @@ export default function Home() {
   };
 
   const handleEdit = (index: number, text: string) => {
-    setEditingIndex(index);
     setEditText(text);
-  };
-
-  const handleSaveEdit = (index: number) => {
-    const newResults = [...results];
-    if (language === "urdu") {
-      newResults[index].urdu = editText;
-    } else {
-      newResults[index].summary = editText;
-    }
-    setResults(newResults);
-    setEditingIndex(null);
-    setEditText("");
-    toast({ title: "Summary updated", variant: "default" });
-  };
-
-  const handleCancelEdit = () => {
-    setEditingIndex(null);
-    setEditText("");
   };
 
   const exportToPDF = async () => {
@@ -170,8 +169,8 @@ export default function Home() {
         doc.text(`URL ${index + 1}: ${result.url}`, 20, yPos);
         yPos += 10;
         doc.setFontSize(10);
-        const summary = language === "urdu" ? result.urdu : result.summary;
-        const lines = doc.splitTextToSize(summary, 170);
+        const summary = language === "urdu" ? (result.urdu ?? '') : (result.summary ?? '');
+        const lines = doc.splitTextToSize(String(summary), 170);
         lines.forEach((line: string) => {
           doc.text(line, 20, yPos);
           yPos += 5;
@@ -180,7 +179,7 @@ export default function Home() {
       });
       doc.save("blog-summaries.pdf");
       toast({ title: "PDF exported", variant: "default" });
-    } catch (error) {
+    } catch (_) {
       toast({ title: "Failed to export PDF", variant: "destructive" });
     }
   };
@@ -357,7 +356,7 @@ export default function Home() {
                                 const newResults = [...results];
                                 newResults[index].urdu = urdu;
                                 setResults(newResults);
-                              } catch (error) {
+                              } catch (_) {
                                 toast({ title: "Translation failed", variant: "destructive" });
                               } finally {
                                 setTranslatingIndex(null);

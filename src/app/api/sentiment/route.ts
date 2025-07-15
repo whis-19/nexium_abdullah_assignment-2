@@ -28,7 +28,7 @@ export async function POST(req: NextRequest) {
       positive: result.positive,
       negative: result.negative
     });
-  } catch (error) {
+  } catch (_) {
     return NextResponse.json({ error: "Failed to analyze sentiment." }, { status: 500 });
   }
 } 

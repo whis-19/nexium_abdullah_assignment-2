@@ -40,7 +40,7 @@ export async function POST(req: NextRequest) {
       .join(". ") + ".";
 
     return NextResponse.json({ summary });
-  } catch (error) {
+  } catch (_) {
     return NextResponse.json({ error: "Failed to generate summary." }, { status: 500 });
   }
 } 
