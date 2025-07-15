@@ -2,15 +2,60 @@
 @tailwind components;
 @tailwind utilities;
 
+:root {
+  --background: #fff;
+  --foreground: #111;
+  --primary: #111;
+  --primary-hover: #222;
+  --secondary: #fff;
+  --secondary-hover: #f3f3f3;
+  --card-bg: #fff;
+  --card-border: #222;
+  --danger: #e11d48;
+  --success: #16a34a;
+  --info: #0ea5e9;
+  --muted: #888;
+  --font-size-base: 18px;
+  --line-height-base: 1.7;
+  --card-shadow: 0 2px 12px 0 rgba(0,0,0,0.06);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --background: #111;
+    --foreground: #fff;
+    --primary: #fff;
+    --primary-hover: #e5e5e5;
+    --secondary: #18181b;
+    --secondary-hover: #232336;
+    --card-bg: #18181b;
+    --card-border: #fff;
+    --danger: #f87171;
+    --success: #4ade80;
+    --info: #38bdf8;
+    --muted: #a1a1aa;
+    --font-size-base: 18px;
+    --line-height-base: 1.7;
+    --card-shadow: 0 2px 12px 0 rgba(0,0,0,0.18);
+  }
+}
+
 html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
+  min-height: 100vh;
+  background: var(--background);
+  color: var(--foreground);
+  font-family: 'Inter', Arial, Helvetica, sans-serif;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
 }
 
 body {
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+  min-height: 100vh;
 }
 
 * {
@@ -20,13 +65,54 @@ body {
 }
 
 a {
-  color: inherit;
+  color: var(--primary);
   text-decoration: none;
+}
+
+a:hover {
+  color: var(--primary-hover);
+}
+
+.card {
+  background: var(--card-bg) !important;
+  color: var(--foreground) !important;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  box-shadow: var(--card-shadow);
+  border-radius: 1.25rem;
+  border: 1.5px solid var(--card-border);
+}
+
+.textarea, textarea, .input, input[type="text"], input[type="url"], input[type="search"] {
+  background: #fff !important;
+  color: #111 !important;
+  font-size: var(--font-size-base);
+  line-height: var(--line-height-base);
+  border-radius: 0.75rem;
+  border: 1px solid var(--card-border);
+}
+
+.textarea::placeholder, textarea::placeholder, .input::placeholder, input[type="text"]::placeholder, input[type="url"]::placeholder, input[type="search"]::placeholder {
+  color: #888 !important;
+  opacity: 1;
 }
 
 @media (prefers-color-scheme: dark) {
   html {
     color-scheme: dark;
+  }
+}
+
+.responsive-container {
+  width: 100%;
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 1.5rem;
+}
+
+@media (max-width: 600px) {
+  .responsive-container {
+    padding: 0.5rem;
   }
 }
 
