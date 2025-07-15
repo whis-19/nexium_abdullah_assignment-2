@@ -21,6 +21,7 @@ export default function Home() {
   const [showHistory, setShowHistory] = useState(false);
   const [history, setHistory] = useState<any[]>([]);
   const [useLLM, setUseLLM] = useState(false);
+  const [translatingIndex, setTranslatingIndex] = useState<number | null>(null);
   const { toast } = useToast();
   const textareaRef = useRef<HTMLTextAreaElement>(null);
 
@@ -63,17 +64,13 @@ export default function Home() {
               const summaryResponse = await fetch(useLLM ? "/api/summarize-llm" : "/api/summarize", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ text: result.text, language }), // Pass language
+                body: JSON.stringify({ text: result.text }), // Always English
               });
               const summaryData = await summaryResponse.json();
-              let summary = summaryResponse.ok ? summaryData.summary : "Failed to generate summary";
+              const summary = summaryResponse.ok ? summaryData.summary : "Failed to generate summary";
+
               let urdu = "";
               if (language === "urdu") {
-                urdu = summary;
-                // Optionally, translate to English if you want both fields filled
-                // Or leave summary (English) blank or use translation endpoint
-              } else {
-                // English summary, translate to Urdu as before
                 const translateResponse = await fetch(useLLM ? "/api/translate-llm" : "/api/translate", {
                   method: "POST",
                   headers: { "Content-Type": "application/json" },
@@ -281,46 +278,97 @@ export default function Home() {
                       <span className="font-semibold">Scraped Text:</span> {result.text.substring(0, 200)}...
                     </div>
                     <div className="mb-2">
-                      <span className="font-semibold text-black">{language === 'urdu' ? 'Urdu Summary:' : 'English Summary:'}</span>
-                      {editingIndex === index ? (
-                        <div className="mt-2 flex flex-col gap-2">
-                          <Textarea
-                            value={editText}
-                            onChange={e => setEditText(e.target.value)}
-                            rows={3}
-                            className="resize-none border rounded-md p-2 text-base bg-white text-black placeholder:text-gray-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-black"
-                          />
-                          <div className="flex gap-2">
-                            <Button size="sm" onClick={() => handleSaveEdit(index)} className="bg-black text-white hover:bg-gray-900">Save</Button>
-                            <Button size="sm" variant="secondary" onClick={handleCancelEdit} className="bg-white text-black border border-gray-300 hover:bg-gray-100">Cancel</Button>
-                          </div>
-                        </div>
-                      ) : (
-                        <div className="flex items-start gap-2 mt-1">
-                          <p className="text-base flex-1 bg-white rounded px-2 py-1 text-black">{language === 'urdu' ? result.urdu : result.summary}</p>
+                      <span className="font-semibold text-black">English Summary:</span>
+                      <div className="flex items-start gap-2 mt-1">
+                        <p className="text-base flex-1 bg-white rounded px-2 py-1 text-black">{result.summary}</p>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => handleEdit(index, result.summary)}
+                          className="bg-white text-black border border-gray-300 hover:bg-gray-100"
+                        >
+                          Edit
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => speak(result.summary, 'en-US')}
+                          className="bg-white text-black border border-gray-300 hover:bg-gray-100"
+                          aria-label="Listen to summary"
+                          type="button"
+                        >
+                          <Volume2 className="w-4 h-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          onClick={stopSpeaking}
+                          className="bg-white text-black border border-gray-300 hover:bg-gray-100"
+                          aria-label="Stop speech"
+                          type="button"
+                        >
+                          Stop
+                        </Button>
+                      </div>
+                      {/* Translate Button and Urdu Summary */}
+                      <div className="mt-2 flex flex-col gap-2">
+                        {result.urdu ? (
+                          <>
+                            <span className="font-semibold text-black">Urdu Translation:</span>
+                            <div className="flex items-start gap-2 mt-1">
+                              <p className="text-base flex-1 bg-white rounded px-2 py-1 text-black">{result.urdu}</p>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={() => speak(result.urdu, 'ur-PK')}
+                                className="bg-white text-black border border-gray-300 hover:bg-gray-100"
+                                aria-label="Listen to Urdu summary"
+                                type="button"
+                              >
+                                <Volume2 className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="secondary"
+                                onClick={stopSpeaking}
+                                className="bg-white text-black border border-gray-300 hover:bg-gray-100"
+                                aria-label="Stop Urdu speech"
+                                type="button"
+                              >
+                                Stop
+                              </Button>
+                            </div>
+                          </>
+                        ) : (
                           <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => speak(language === 'urdu' ? result.urdu : result.summary, language === 'urdu' ? 'ur-PK' : 'en-US')}
-                            className="bg-white text-black border border-gray-300 hover:bg-gray-100"
-                            aria-label="Listen to summary"
-                            type="button"
+                            disabled={translatingIndex === index}
+                            onClick={async () => {
+                              setTranslatingIndex(index);
+                              try {
+                                const translateResponse = await fetch(useLLM ? "/api/translate-llm" : "/api/translate", {
+                                  method: "POST",
+                                  headers: { "Content-Type": "application/json" },
+                                  body: JSON.stringify({ summary: result.summary }),
+                                });
+                                const translateData = await translateResponse.json();
+                                const urdu = translateResponse.ok ? translateData.urdu : "Translation failed";
+                                const newResults = [...results];
+                                newResults[index].urdu = urdu;
+                                setResults(newResults);
+                              } catch (error) {
+                                toast({ title: "Translation failed", variant: "destructive" });
+                              } finally {
+                                setTranslatingIndex(null);
+                              }
+                            }}
+                            className="bg-white text-black border border-gray-300 hover:bg-gray-100 mt-2"
                           >
-                            <Volume2 className="w-4 h-4" />
+                            {translatingIndex === index ? "Translating..." : "Translate to Urdu"}
                           </Button>
-                          <Button
-                            size="sm"
-                            variant="secondary"
-                            onClick={stopSpeaking}
-                            className="bg-white text-black border border-gray-300 hover:bg-gray-100"
-                            aria-label="Stop speech"
-                            type="button"
-                          >
-                            Stop
-                          </Button>
-                          <Button size="sm" variant="secondary" onClick={() => handleEdit(index, language === 'urdu' ? result.urdu : result.summary)} className="bg-white text-black border border-gray-300 hover:bg-gray-100">Edit</Button>
-                        </div>
-                      )}
+                        )}
+                      </div>
                     </div>
                     <div className="flex flex-row gap-4 items-center mt-2">
                       <span className="text-sm"><b>Sentiment:</b> <span className={
